@@ -1,0 +1,48 @@
+import '../models/company_type.dart';
+
+const companyTypes = [
+  CompanyType(
+    id: 'service_agency',
+    title: 'Service Agency',
+    description: 'A practical client-service business built on reliability.',
+    startupCost: 220,
+    monthlyOperatingCost: 55,
+    minRevenue: 35,
+    maxRevenue: 150,
+    risk: 'Medium',
+    tags: ['service', 'sales', 'communication'],
+  ),
+  CompanyType(
+    id: 'sales_office',
+    title: 'Sales Office',
+    description: 'A lean commercial operation with higher variance.',
+    startupCost: 260,
+    monthlyOperatingCost: 70,
+    minRevenue: 20,
+    maxRevenue: 190,
+    risk: 'High',
+    tags: ['sales', 'operations'],
+  ),
+  CompanyType(
+    id: 'digital_studio',
+    title: 'Digital Studio',
+    description: 'A small digital production business with scalable upside.',
+    startupCost: 280,
+    monthlyOperatingCost: 65,
+    minRevenue: 30,
+    maxRevenue: 180,
+    risk: 'Medium',
+    tags: ['digital', 'content', 'tools'],
+  ),
+  CompanyType(
+    id: 'operations_firm',
+    title: 'Small Operations Firm',
+    description: 'A structured operations business with steadier performance.',
+    startupCost: 320,
+    monthlyOperatingCost: 85,
+    minRevenue: 50,
+    maxRevenue: 175,
+    risk: 'Medium',
+    tags: ['operations', 'production'],
+  ),
+];
