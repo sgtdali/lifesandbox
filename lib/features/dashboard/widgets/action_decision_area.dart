@@ -35,7 +35,6 @@ class _ActionDecisionAreaState extends State<ActionDecisionArea> {
           // Recommended Horizontal Cards
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
             child: Row(
               children: [
                 for (final rec in recommendations)

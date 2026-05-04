@@ -127,29 +127,29 @@ class EducationPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // 5. Catalog Grid
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.82,
+          // 5. Catalog Catalog (Using Wrap instead of GridView to fix scrolling freezes)
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
               for (final program in controller.educationPrograms)
-                _ProgramCard(
-                  program: program,
-                  canStart: controller.canStartEducation(program),
-                  isCompleted: state.completedEducations.any(
-                    (record) => record.programId == program.id,
+                SizedBox(
+                  width: 248, // Balanced for 540px container
+                  height: 260,
+                  child: _ProgramCard(
+                    program: program,
+                    canStart: controller.canStartEducation(program),
+                    isCompleted: state.completedEducations.any(
+                      (record) => record.programId == program.id,
+                    ),
+                    onStart: () async {
+                      final started = await controller.startEducation(program);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(started ? '${program.title} started.' : 'Only one active program allowed.')),
+                      );
+                    },
                   ),
-                  onStart: () async {
-                    final started = await controller.startEducation(program);
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(started ? '${program.title} started.' : 'Only one active program allowed.')),
-                    );
-                  },
                 ),
             ],
           ),

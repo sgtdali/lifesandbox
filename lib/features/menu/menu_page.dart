@@ -47,11 +47,31 @@ class MenuPage extends StatelessWidget {
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () async {
-              await controller.resetGame();
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('New game started.')),
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Reset Game'),
+                  content: const Text('Are you sure you want to start a new game? All progress will be permanently lost.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: const Text('Reset', style: TextStyle(color: AppTheme.red)),
+                    ),
+                  ],
+                ),
               );
+
+              if (confirm == true) {
+                await controller.resetGame();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('New game started.')),
+                );
+              }
             },
             icon: const Icon(Icons.restart_alt_rounded, color: AppTheme.red),
             label: const Text('Reset / New Game'),

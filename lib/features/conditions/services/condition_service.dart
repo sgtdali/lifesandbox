@@ -27,6 +27,13 @@ class ConditionService {
           reliabilityScore:
               (player.reliabilityScore + effect.reliability).clamp(0, 100).toInt(),
         );
+
+        if (company != null && (effect.companyHealth != 0 || effect.companyMomentum != 0)) {
+          company = company.copyWith(
+            health: (company.health + effect.companyHealth).clamp(0, 100).toInt(),
+            momentum: (company.momentum + effect.companyMomentum).clamp(0, 100).toInt(),
+          );
+        }
       }
       energyRecoveryModifier += effect.energyRecovery;
       _collectStatChanges(statChanges, condition);
@@ -190,6 +197,12 @@ class ConditionService {
     }
     if (effect.energyRecovery != 0) {
       changes.add(StatChange(label: '${condition.title} energy recovery', amount: effect.energyRecovery));
+    }
+    if (effect.companyHealth != 0) {
+      changes.add(StatChange(label: '${condition.title} company health', amount: effect.companyHealth));
+    }
+    if (effect.companyMomentum != 0) {
+      changes.add(StatChange(label: '${condition.title} company momentum', amount: effect.companyMomentum));
     }
   }
 }

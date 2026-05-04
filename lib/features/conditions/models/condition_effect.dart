@@ -28,6 +28,8 @@ class ConditionEffect {
         happiness != 0 ||
         stress != 0 ||
         intelligence != 0 ||
-        reliability != 0;
+        reliability != 0 ||
+        companyHealth != 0 ||
+        companyMomentum != 0;
   }
 }

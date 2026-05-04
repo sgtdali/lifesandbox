@@ -113,11 +113,6 @@ class SimulationRunner {
       endMonth();
     }
     
-    // Final resolution to ensure any end-of-month events/debt are reflected in final stats
-    // We don't increment the month again, just resolve the current state's obligations
-    final finalRes = monthResolver.resolve(state);
-    _setState(finalRes.state.copyWith(month: state.month)); // Keep month the same
-    
     _updateTrackingMetrics();
   }
 

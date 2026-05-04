@@ -23,7 +23,8 @@ class VitalsStrip extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.border.withOpacity(0.5)),
       ),
-      child: IntrinsicHeight(
+      child: SizedBox(
+        height: 40,
         child: Row(
           children: [
             _VitalsItem(

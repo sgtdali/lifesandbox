@@ -35,27 +35,32 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final controller = GameScope.of(context);
     return Scaffold(
+      backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: Center(
-          child: SizedBox(
-            width: 540,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: VitalsStrip(
-                    stats: controller.state.player.stats,
-                    cash: controller.state.player.cash,
-                    month: controller.state.month,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 540,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    child: VitalsStrip(
+                      stats: controller.state.player.stats,
+                      cash: controller.state.player.cash,
+                      month: controller.state.month,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: IndexedStack(index: _index, children: _pages),
-                ),
-              ],
+                  Expanded(
+                    child: IndexedStack(index: _index, children: _pages),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
       bottomNavigationBar: Container(
