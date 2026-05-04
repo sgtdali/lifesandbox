@@ -1,3 +1,4 @@
+import '../../../core/constants/game_balance.dart';
 import '../../../game/models/game_state.dart';
 import '../data/company_catalog.dart';
 import '../models/active_company.dart';
@@ -68,14 +69,15 @@ class CompanyService {
   bool canFound(GameState state, CompanyType type) {
     return state.activeCompany == null &&
         isUnlocked(state) &&
-        state.player.cash >= type.startupCost;
+        state.player.cash >= (type.startupCost * GameBalance.companyStartupCostMultiplier).round();
   }
 
   GameState foundCompany(GameState state, CompanyType type) {
     if (!canFound(state, type)) return state;
 
+    final cost = (type.startupCost * GameBalance.companyStartupCostMultiplier).round();
     return state.copyWith(
-      player: state.player.copyWith(cash: state.player.cash - type.startupCost),
+      player: state.player.copyWith(cash: state.player.cash - cost),
       activeCompany: ActiveCompany(
         name: _defaultCompanyName(type),
         type: type,
@@ -175,14 +177,19 @@ class CompanyService {
     final stabilityLoss = company.operationsFocusThisMonth > 0
         ? deliveryStrain ~/ 2
         : deliveryStrain + profile.operationsDrag;
-    final revenue = (type.minRevenue +
-            pipelineValue +
-            variance +
-            qualityBonus +
-            actionBonus)
-        .clamp(0, type.maxRevenue + 120)
+    final isEarlyStage = company.monthsActive < 6;
+    final revMultiplier = isEarlyStage ? GameBalance.earlyCompanyRevenueMultiplier : 1.0;
+    final costMultiplier = isEarlyStage ? GameBalance.earlyCompanyOperatingCostMultiplier : 1.0;
+
+    final revenue = ((type.minRevenue +
+                pipelineValue +
+                variance +
+                qualityBonus +
+                actionBonus) *
+            revMultiplier)
+        .clamp(0.0, (type.maxRevenue + 120).toDouble())
         .toInt();
-    final operatingCost = type.monthlyOperatingCost + deliveryStrain;
+    final operatingCost = ((type.monthlyOperatingCost + deliveryStrain) * costMultiplier).round();
     final net = revenue - operatingCost;
 
     final healthDelta = (net >= 0 ? 2 : -5) +

@@ -68,7 +68,7 @@ class _MonthSummarySheet extends StatelessWidget {
 
                     _buildSection(
                       title: 'Cash Flow',
-                      icon: Icons.savings_rounded,
+                      icon: Icons.attach_money_rounded,
                       rows: [
                         _SummaryRowData('Cash Before', '${result.cashBefore}'),
                         if (result.salaryEarned > 0) _SummaryRowData('Job Salary', '+${result.salaryEarned}', AppTheme.green),

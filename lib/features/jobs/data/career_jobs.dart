@@ -1,3 +1,4 @@
+import '../../../core/constants/game_balance.dart';
 import '../models/job.dart';
 
 final careerJobs = <Job>[
@@ -99,7 +100,11 @@ int _salaryFor(String track, int level) {
     'Office' => 142,
     _ => 138,
   };
-  return base + (level - 1) * 48;
+  final salary = base + (level - 1) * 48;
+  if (level <= 2) {
+    return (salary * GameBalance.starterJobSalaryMultiplier).round();
+  }
+  return salary;
 }
 
 int _energyFor(String track, int level) {

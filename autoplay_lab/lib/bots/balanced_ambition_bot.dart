@@ -19,7 +19,7 @@ class BalancedAmbitionBot extends BaseBot {
 
     // 2. Start education if stable
     if (runner.state.activeEducation == null && 
-        runner.state.player.cash > 600 && 
+        runner.state.player.cash > 250 && 
         runner.state.month > 4 && 
         runner.state.completedEducations.isEmpty) {
       if (runner.educationService.programs.isNotEmpty) {
@@ -32,7 +32,7 @@ class BalancedAmbitionBot extends BaseBot {
     final totalDebt = runner.state.activeDebts.fold(0, (sum, d) => sum + d.remainingBalance);
     
     if (runner.state.activeCompany == null && 
-        runner.state.player.cash >= 1000 && 
+        runner.state.player.cash >= 600 && 
         totalDebt == 0 && 
         (runner.state.completedEducations.isNotEmpty || runner.state.month > 12)) {
       if (runner.companyService.types.isNotEmpty) {
@@ -45,7 +45,7 @@ class BalancedAmbitionBot extends BaseBot {
 
     // 3.5 Housing Upgrades
     // Only upgrade if we have excellent cash buffer, low debt, and good income
-    if (runner.state.player.cash > obligations * 4 + 1000 && totalDebt == 0 && runner.state.currentJob != null) {
+    if (runner.state.player.cash > obligations * 3 + 600 && totalDebt == 0 && runner.state.currentJob != null) {
       if (runner.state.currentHousing.id == 'shared_room') {
         final betterHousing = runner.housingService.options.firstWhere((o) => o.id == 'studio_apartment', orElse: () => runner.housingService.options.last);
         if (runner.canMoveHousing(betterHousing)) {

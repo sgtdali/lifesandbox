@@ -284,7 +284,7 @@ class _DepositCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppSectionCard(
       title: deposit.title,
-      icon: Icons.savings_rounded,
+      icon: Icons.attach_money_rounded,
       iconColor: AppTheme.primary,
       action: StatusChip(label: deposit.isFlexible ? 'Liquid' : 'Locked', color: AppTheme.primary),
       child: Column(

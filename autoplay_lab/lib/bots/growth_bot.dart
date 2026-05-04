@@ -18,7 +18,7 @@ class GrowthBot extends BaseBot {
     runner.applyToBestJob();
 
     // Start education if none is active
-    if (runner.state.activeEducation == null && runner.state.player.cash > 500) {
+    if (runner.state.activeEducation == null && runner.state.player.cash > 250) {
       if (runner.educationService.programs.isNotEmpty) {
         // Variation: 20% chance to pick a random education program instead of the first
         int index = 0;

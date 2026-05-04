@@ -112,6 +112,13 @@ class SimulationRunner {
 
       endMonth();
     }
+    
+    // Final resolution to ensure any end-of-month events/debt are reflected in final stats
+    // We don't increment the month again, just resolve the current state's obligations
+    final finalRes = monthResolver.resolve(state);
+    _setState(finalRes.state.copyWith(month: state.month)); // Keep month the same
+    
+    _updateTrackingMetrics();
   }
 
   void endMonth() {
@@ -129,7 +136,10 @@ class SimulationRunner {
     }
 
     _setState(nextState);
-    
+    _updateTrackingMetrics();
+  }
+
+  void _updateTrackingMetrics() {
     // Update tracking metrics
     if (state.currentJob != null && firstJobMonth == null) firstJobMonth = state.month;
     if (state.activeEducation != null && firstEduStartMonth == null) firstEduStartMonth = state.month;
@@ -149,7 +159,7 @@ class SimulationRunner {
     final monthlyObligations = state.player.monthlyBaseExpense + state.currentHousing.monthlyCost + state.activeDebts.fold<int>(0, (sum, d) => sum + d.monthlyPayment);
     if (monthlyObligations > highestMonthlyObligation) highestMonthlyObligation = monthlyObligations;
     
-    final liquidCash = state.player.cash; // Assuming cash is the only liquid part right now
+    final liquidCash = state.player.cash; 
     if (liquidCash < lowestLiquidCash) lowestLiquidCash = liquidCash;
     
     final pressureSignals = progressionService.pressureSignalsFor(state);

@@ -1,3 +1,4 @@
+import '../../../core/constants/game_balance.dart';
 import '../../../game/models/game_state.dart';
 import '../data/finance_products.dart';
 import '../models/active_debt.dart';
@@ -181,12 +182,15 @@ class FinanceService {
   }
 
   ActiveDebt _emergencyDebt(int shortage, int month, int index) {
-    final payment = (shortage / 3).ceil().clamp(16, 58).toInt();
+    final payment = (shortage / 3)
+        .ceil()
+        .clamp(GameBalance.emergencyDebtMinPayment, 64)
+        .toInt();
 
     return ActiveDebt(
       id: 'emergency_${month}_$index',
       title: 'Emergency Debt',
-      remainingBalance: shortage + (shortage / 5).ceil(),
+      remainingBalance: (shortage * GameBalance.emergencyDebtInterestMultiplier).round(),
       monthlyPayment: payment,
       remainingMonths: 0,
       isEmergency: true,

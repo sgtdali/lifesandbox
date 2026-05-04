@@ -15,7 +15,7 @@ class ActionService {
           energyCost: 5,
           health: 2,
           happiness: 3,
-          stress: -7,
+          stress: -6,
         ),
         ActionDefinition(
           type: ActionType.deepRest,
@@ -24,7 +24,7 @@ class ActionService {
           energyCost: 12,
           health: 5,
           happiness: 1,
-          stress: -12,
+          stress: -11,
           conditionId: 'recovery_phase',
         ),
         ActionDefinition(
@@ -63,7 +63,7 @@ class ActionService {
           description: 'Improve intelligence at the cost of focus and stress.',
           energyCost: 35,
           intelligence: 4,
-          stress: 4,
+          stress: 5,
           happiness: -1,
         ),
         ActionDefinition(
