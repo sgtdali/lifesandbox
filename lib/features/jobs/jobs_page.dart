@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../game/state/game_scope.dart';
+import '../../shared/widgets/app_section_card.dart';
+import '../../shared/widgets/metric_row.dart';
+import '../../shared/widgets/status_chip.dart';
 import 'models/job.dart';
 import 'models/suitability.dart';
 import 'models/work_history.dart';
@@ -21,7 +24,7 @@ class JobsPage extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -32,6 +35,7 @@ class JobsPage extends StatelessWidget {
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 18),
+          
           _CurrentJobCard(
             job: currentJob,
             performance: controller.jobPerformance.label,
@@ -39,6 +43,7 @@ class JobsPage extends StatelessWidget {
             readyForNextStep: controller.isReadyForNextCareerStep,
           ),
           const SizedBox(height: 12),
+          
           _WorkHistoryCard(
             totalMonths: state.workHistory.totalMonthsEmployed,
             strongestTrack: state.workHistory.strongestTrack,
@@ -46,31 +51,22 @@ class JobsPage extends StatelessWidget {
             trackMonths: state.workHistory.trackMonths,
           ),
           const SizedBox(height: 18),
+          
           Row(
             children: [
-              Expanded(
-                child: Text('Available listings', style: textTheme.titleLarge),
-              ),
-              Text(
-                '${controller.jobSearchEnergyCost} EN',
-                style: textTheme.bodyMedium,
-              ),
+              Expanded(child: Text('Available listings', style: textTheme.titleLarge)),
+              Text('${controller.jobSearchEnergyCost} EN', style: textTheme.bodyMedium),
             ],
           ),
           const SizedBox(height: 10),
+          
           OutlinedButton.icon(
             onPressed: state.player.stats.energy >= controller.jobSearchEnergyCost
                 ? () async {
                     final refreshed = await controller.refreshJobListings();
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          refreshed
-                              ? 'Career listings refreshed.'
-                              : 'Not enough energy to search jobs.',
-                        ),
-                      ),
+                      SnackBar(content: Text(refreshed ? 'Career listings refreshed.' : 'Not enough energy to search jobs.')),
                     );
                   }
                 : null,
@@ -78,6 +74,7 @@ class JobsPage extends StatelessWidget {
             label: const Text('Search Jobs'),
           ),
           const SizedBox(height: 12),
+          
           for (final job in state.availableJobs) ...[
             _JobListingCard(
               job: job,
@@ -86,9 +83,7 @@ class JobsPage extends StatelessWidget {
               onApply: () async {
                 final result = await controller.applyToJob(job);
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(result.message)),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message)));
               },
             ),
             const SizedBox(height: 10),
@@ -114,54 +109,37 @@ class _CurrentJobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final employed = job != null;
+    if (job == null) {
+      return const AppSectionCard(
+        title: 'Unemployed',
+        icon: Icons.work_off_rounded,
+        iconColor: AppTheme.amber,
+        child: Text('No salary and no automatic job energy burden.'),
+      );
+    }
 
-    return Card(
-      color: AppTheme.surfaceRaised,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  employed ? Icons.badge_rounded : Icons.work_off_rounded,
-                  color: employed ? AppTheme.green : AppTheme.amber,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    employed ? job!.title : 'Unemployed',
-                    style: textTheme.titleLarge,
-                  ),
-                ),
-              ],
-            ),
+    return AppSectionCard(
+      title: job!.title,
+      icon: Icons.badge_rounded,
+      iconColor: AppTheme.green,
+      action: StatusChip(label: '${job!.track} L${job!.level}', color: AppTheme.primary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MetricRow(label: 'Layer', value: job!.layerLabel),
+          MetricRow(label: 'Monthly Salary', value: '+${job!.monthlySalary}', valueColor: AppTheme.green),
+          MetricRow(label: 'Monthly Energy Load', value: '-${job!.monthlyEnergyLoad} EN', valueColor: AppTheme.amber),
+          const Divider(height: 24, color: AppTheme.border),
+          MetricRow(label: 'Performance', value: performance),
+          MetricRow(label: 'Months in Role', value: '$tenure'),
+          if (readyForNextStep) ...[
             const SizedBox(height: 12),
-            if (employed) ...[
-              _Metric(label: 'Track', value: '${job!.track} L${job!.level}'),
-              _Metric(label: 'Layer', value: job!.layerLabel),
-              _Metric(label: 'Monthly salary', value: '+${job!.monthlySalary}'),
-              _Metric(
-                label: 'Monthly energy load',
-                value: '-${job!.monthlyEnergyLoad} EN',
-              ),
-              _Metric(label: 'Performance', value: performance),
-              _Metric(label: 'Months in role', value: '$tenure'),
-              if (readyForNextStep)
-                Text(
-                  'Ready for stronger ${job!.track} roles.',
-                  style: textTheme.bodyMedium?.copyWith(color: AppTheme.green),
-                ),
-            ] else
-              Text(
-                'No salary and no automatic job energy burden.',
-                style: textTheme.bodyMedium,
-              ),
+            Text(
+              'Ready for stronger ${job!.track} roles.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.green),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -182,48 +160,29 @@ class _WorkHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final entries = trackMonths.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final entries = trackMonths.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Work history', style: textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Row(
+    return AppSectionCard(
+      title: 'Work History',
+      icon: Icons.history_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MetricRow(label: 'Total Employed', value: '$totalMonths months'),
+          MetricRow(label: 'Strongest Track', value: strongestTrack),
+          MetricRow(label: 'Highest Career Level', value: 'L$highestLevel'),
+          if (entries.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
-                  child: _Metric(
-                    label: 'Total employed',
-                    value: '$totalMonths months',
-                  ),
-                ),
-                Expanded(
-                  child: _Metric(
-                    label: 'Strongest track',
-                    value: strongestTrack,
-                  ),
-                ),
+                for (final entry in entries.take(4))
+                  StatusChip(label: '${entry.key} ${entry.value}m', color: AppTheme.primary),
               ],
             ),
-            _Metric(label: 'Highest career level', value: 'L$highestLevel'),
-            if (entries.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final entry in entries.take(4))
-                    _Pill(label: '${entry.key} ${entry.value}m'),
-                ],
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -244,74 +203,25 @@ class _JobListingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Text(job.title, style: textTheme.titleMedium)),
-                const SizedBox(width: 10),
-                _Pill(label: job.layerLabel),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(job.description, style: textTheme.bodyMedium),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _Metric(
-                    label: 'Track / level',
-                    value: '${job.track} L${job.level}',
-                  ),
-                ),
-                Expanded(
-                  child: _Metric(
-                    label: 'Salary',
-                    value: '+${job.monthlySalary}',
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _Metric(
-                    label: 'Energy load',
-                    value: '-${job.monthlyEnergyLoad} EN',
-                  ),
-                ),
-                Expanded(
-                  child: _Metric(
-                    label: 'Security',
-                    value: '${job.jobSecurity}',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _FitBlock(suitability: suitability),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: isCurrentJob || !suitability.level.canApply
-                  ? null
-                  : onApply,
-              child: Text(
-                isCurrentJob
-                    ? 'Current Job'
-                    : suitability.level.canApply
-                        ? 'Apply'
-                        : 'Build Fit First',
-              ),
-            ),
-          ],
-        ),
+    return AppSectionCard(
+      title: job.title,
+      subtitle: job.description,
+      action: StatusChip(label: job.layerLabel, color: AppTheme.primary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MetricRow(label: 'Track / Level', value: '${job.track} L${job.level}'),
+          MetricRow(label: 'Salary', value: '+${job.monthlySalary}', valueColor: AppTheme.green),
+          MetricRow(label: 'Energy Load', value: '-${job.monthlyEnergyLoad} EN', valueColor: AppTheme.amber),
+          MetricRow(label: 'Security', value: '${job.jobSecurity}'),
+          const SizedBox(height: 12),
+          _FitBlock(suitability: suitability),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: isCurrentJob || !suitability.level.canApply ? null : onApply,
+            child: Text(isCurrentJob ? 'Current Job' : suitability.level.canApply ? 'Apply' : 'Build Fit First'),
+          ),
+        ],
       ),
     );
   }
@@ -356,62 +266,6 @@ class _FitBlock extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: textTheme.bodyMedium),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.labelLarge,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppTheme.primary,
-            ),
       ),
     );
   }

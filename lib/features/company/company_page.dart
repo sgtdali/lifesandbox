@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../game/state/game_scope.dart';
+import '../../shared/widgets/app_section_card.dart';
+import '../../shared/widgets/metric_row.dart';
+import '../../shared/widgets/status_chip.dart';
+import '../../shared/widgets/warning_banner.dart';
 import 'models/active_company.dart';
 import 'models/company_action.dart';
 import 'models/company_type.dart';
@@ -22,7 +26,7 @@ class CompanyPage extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -33,13 +37,15 @@ class CompanyPage extends StatelessWidget {
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 18),
+          
           if (company == null) ...[
             _UnlockCard(
               unlocked: controller.isCompanyUnlocked(),
               text: controller.companyUnlockText(),
             ),
             const SizedBox(height: 18),
-            Text('Company types', style: textTheme.titleLarge),
+            
+            Text('Company Types', style: textTheme.titleLarge),
             const SizedBox(height: 12),
             for (final type in controller.companyTypes) ...[
               _CompanyTypeCard(
@@ -49,13 +55,7 @@ class CompanyPage extends StatelessWidget {
                   final founded = await controller.foundCompany(type);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        founded
-                            ? '${type.title} founded.'
-                            : 'Requirements or startup cash are not met.',
-                      ),
-                    ),
+                    SnackBar(content: Text(founded ? '${type.title} founded.' : 'Requirements or startup cash are not met.')),
                   );
                 },
               ),
@@ -68,7 +68,8 @@ class CompanyPage extends StatelessWidget {
               signals: controller.companySignals,
             ),
             const SizedBox(height: 18),
-            Text('Business actions', style: textTheme.titleLarge),
+            
+            Text('Business Actions', style: textTheme.titleLarge),
             const SizedBox(height: 12),
             for (final action in controller.companyActions) ...[
               _CompanyActionCard(
@@ -78,26 +79,19 @@ class CompanyPage extends StatelessWidget {
                   final used = await controller.performCompanyAction(action);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        used
-                            ? '${action.title} applied.'
-                            : 'Not enough energy for that action.',
-                      ),
-                    ),
+                    SnackBar(content: Text(used ? '${action.title} applied.' : 'Not enough energy for that action.')),
                   );
                 },
               ),
               const SizedBox(height: 10),
             ],
             const SizedBox(height: 12),
+            
             OutlinedButton.icon(
               onPressed: () async {
                 await controller.closeCompany();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Company closed.')),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Company closed.')));
               },
               icon: const Icon(Icons.close_rounded, color: AppTheme.red),
               label: const Text('Close Company'),
@@ -110,33 +104,27 @@ class CompanyPage extends StatelessWidget {
 }
 
 class _UnlockCard extends StatelessWidget {
-  const _UnlockCard({
-    required this.unlocked,
-    required this.text,
-  });
+  const _UnlockCard({required this.unlocked, required this.text});
 
   final bool unlocked;
   final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppTheme.surfaceRaised,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(
-              unlocked ? Icons.lock_open_rounded : Icons.lock_rounded,
-              color: unlocked ? AppTheme.green : AppTheme.amber,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
-            ),
-          ],
-        ),
-      ),
+    if (!unlocked) {
+      return WarningBanner(
+        title: 'Locked',
+        message: text,
+        severity: WarningSeverity.warning,
+        icon: Icons.lock_rounded,
+      );
+    }
+    
+    return AppSectionCard(
+      title: 'Unlocked',
+      icon: Icons.lock_open_rounded,
+      iconColor: AppTheme.green,
+      child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
     );
   }
 }
@@ -154,40 +142,22 @@ class _CompanyTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(child: Text(type.title, style: textTheme.titleMedium)),
-                _Pill(label: type.risk),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(type.description, style: textTheme.bodyMedium),
-            const SizedBox(height: 12),
-            _Metric(label: 'Startup cost', value: '${type.startupCost}'),
-            _Metric(label: 'Operating cost', value: '${type.monthlyOperatingCost}/mo'),
-            _Metric(
-              label: 'Revenue range',
-              value: '${type.minRevenue}-${type.maxRevenue}/mo',
-            ),
-            _Metric(
-              label: 'Profile',
-              value: const CompanyProfileService().profileFor(type).summary,
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: canFound ? onFound : null,
-              child: const Text('Found Company'),
-            ),
-          ],
-        ),
+    return AppSectionCard(
+      title: type.title,
+      subtitle: type.description,
+      action: StatusChip(label: type.risk, color: AppTheme.amber),
+      child: Column(
+        children: [
+          MetricRow(label: 'Startup Cost', value: '${type.startupCost}'),
+          MetricRow(label: 'Operating Cost', value: '${type.monthlyOperatingCost}/mo', valueColor: AppTheme.red),
+          MetricRow(label: 'Revenue Range', value: '${type.minRevenue}-${type.maxRevenue}/mo', valueColor: AppTheme.green),
+          MetricRow(label: 'Profile', value: const CompanyProfileService().profileFor(type).summary),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: canFound ? onFound : null,
+            child: const Text('Found Company'),
+          ),
+        ],
       ),
     );
   }
@@ -206,38 +176,49 @@ class _CompanyOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      color: AppTheme.surfaceRaised,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(company.name, style: textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text('${company.type.title} - $outlook', style: textTheme.bodyMedium),
-            const SizedBox(height: 14),
-            _Metric(label: 'Months active', value: '${company.monthsActive}'),
-            _Metric(label: 'Health', value: '${company.health}/100'),
-            _Metric(label: 'Momentum', value: '${company.momentum}/100'),
-            _Metric(label: 'Pipeline', value: '${company.pipeline}/100'),
-            _Metric(label: 'Operations', value: '${company.operations}/100'),
-            _Metric(label: 'Last net result', value: '${company.lastNetResult}'),
-            _Metric(label: 'Current effort', value: '${company.effortThisMonth} EN'),
-            const SizedBox(height: 8),
-            Text('Business outlook', style: textTheme.titleMedium),
+    return AppSectionCard(
+      title: company.name,
+      subtitle: '${company.type.title} - $outlook',
+      icon: Icons.business_rounded,
+      iconColor: AppTheme.primary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MetricRow(label: 'Months Active', value: '${company.monthsActive}'),
+          MetricRow(label: 'Health', value: '${company.health}/100', valueColor: _colorForMetric(company.health)),
+          MetricRow(label: 'Momentum', value: '${company.momentum}/100', valueColor: _colorForMetric(company.momentum)),
+          MetricRow(label: 'Pipeline', value: '${company.pipeline}/100', valueColor: _colorForMetric(company.pipeline)),
+          MetricRow(label: 'Operations', value: '${company.operations}/100', valueColor: _colorForMetric(company.operations)),
+          const Divider(height: 24, color: AppTheme.border),
+          MetricRow(label: 'Last Net Result', value: '${company.lastNetResult}', valueColor: company.lastNetResult >= 0 ? AppTheme.green : AppTheme.red),
+          MetricRow(label: 'Current Effort', value: '${company.effortThisMonth} EN', valueColor: AppTheme.amber),
+          
+          if (signals.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('Business Outlook', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             for (final signal in signals)
               Padding(
-                padding: const EdgeInsets.only(bottom: 5),
-                child: Text(signal, style: textTheme.bodyMedium),
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.mutedText),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(signal, style: Theme.of(context).textTheme.bodyMedium)),
+                  ],
+                ),
               ),
           ],
-        ),
+        ],
       ),
     );
+  }
+  
+  Color? _colorForMetric(int value) {
+    if (value >= 70) return AppTheme.green;
+    if (value <= 30) return AppTheme.red;
+    return AppTheme.amber;
   }
 }
 
@@ -254,36 +235,20 @@ class _CompanyActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: InkWell(
-        onTap: canUse ? onUse : null,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(action.title, style: textTheme.titleMedium),
-                    const SizedBox(height: 5),
-                    Text(action.description, style: textTheme.bodyMedium),
-                    const SizedBox(height: 8),
-                    Text(
-                      _effectText(action),
-                      style: textTheme.bodyMedium?.copyWith(color: AppTheme.mutedText),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              _Pill(label: '${action.energyCost} EN'),
-            ],
+    return AppSectionCard(
+      title: action.title,
+      subtitle: action.description,
+      action: StatusChip(label: '${action.energyCost} EN', color: canUse ? AppTheme.primary : AppTheme.mutedText),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MetricRow(label: 'Effect', value: _effectText(action), valueColor: AppTheme.primary),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: canUse ? onUse : null,
+            child: const Text('Apply Focus'),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -293,67 +258,9 @@ class _CompanyActionCard extends StatelessWidget {
     if (action.health != 0) parts.add('Health ${_signed(action.health)}');
     if (action.momentum != 0) parts.add('Momentum ${_signed(action.momentum)}');
     if (action.pipeline != 0) parts.add('Pipeline ${_signed(action.pipeline)}');
-    if (action.operations != 0) {
-      parts.add('Operations ${_signed(action.operations)}');
-    }
+    if (action.operations != 0) parts.add('Operations ${_signed(action.operations)}');
     return parts.join(' / ');
   }
 
   String _signed(int value) => value > 0 ? '+$value' : '$value';
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: textTheme.bodyMedium)),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: textTheme.labelLarge,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppTheme.primary,
-            ),
-      ),
-    );
-  }
 }

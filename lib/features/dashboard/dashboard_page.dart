@@ -3,13 +3,17 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../features/conditions/widgets/conditions_snapshot.dart';
 import '../../features/events/widgets/event_sheet.dart';
+import '../../features/progression/models/run_state_evaluation.dart';
 import '../../features/progression/widgets/progression_overview.dart';
 import '../../features/wellbeing/widgets/wellbeing_card.dart';
 import '../../game/state/game_scope.dart';
+import '../../shared/widgets/app_section_card.dart';
+import '../../shared/widgets/metric_row.dart';
+import '../../shared/widgets/status_chip.dart';
+import '../../shared/widgets/warning_banner.dart';
 import 'widgets/action_list.dart';
 import 'widgets/month_summary_sheet.dart';
 import 'widgets/stat_bar.dart';
-import 'widgets/status_card.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -33,10 +37,11 @@ class DashboardPage extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Primary Life Snapshot
           Row(
             children: [
               Expanded(
@@ -45,155 +50,149 @@ class DashboardPage extends StatelessWidget {
                   children: [
                     Text('Month ${state.month}', style: textTheme.headlineSmall),
                     const SizedBox(height: 4),
-                    Text('Life control center', style: textTheme.bodyMedium),
+                    Text(controller.runState.label, style: textTheme.bodyMedium?.copyWith(color: AppTheme.primary, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
-              _StatusPill(label: player.reliability.label),
+              StatusChip(
+                label: player.reliability.label,
+                color: AppTheme.primary,
+                icon: Icons.shield_rounded,
+              ),
             ],
           ),
           const SizedBox(height: 18),
+
+          // 2. Pressure / Warning Strip
+          if (controller.pressureSignals.isNotEmpty) ...[
+            for (final pressure in controller.pressureSignals.take(3)) ...[
+              WarningBanner(
+                title: pressure.label,
+                message: pressure.detail,
+                severity: pressure.level == PressureLevel.danger ? WarningSeverity.danger : WarningSeverity.warning,
+              ),
+              const SizedBox(height: 10),
+            ],
+            const SizedBox(height: 8),
+          ],
+
           if (pendingEvent != null) ...[
-            Card(
-              color: AppTheme.surfaceRaised,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.event_note_rounded, color: AppTheme.amber),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Pending event', style: textTheme.titleMedium),
-                          const SizedBox(height: 4),
-                          Text(pendingEvent.event.title, style: textTheme.bodyMedium),
-                        ],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => showPendingEventSheet(
-                        context,
-                        pendingEvent,
-                      ),
-                      child: const Text('Open'),
-                    ),
-                  ],
-                ),
+            WarningBanner(
+              title: 'Pending event',
+              message: pendingEvent.event.title,
+              severity: WarningSeverity.info,
+              icon: Icons.event_note_rounded,
+              action: TextButton(
+                onPressed: () => showPendingEventSheet(context, pendingEvent),
+                child: const Text('Open'),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
           ],
-          ProgressionOverview(controller: controller),
-          const SizedBox(height: 14),
+
+          // 3. Core Stats & Wellbeing
           WellbeingCard(evaluation: controller.wellbeing),
           const SizedBox(height: 14),
-          ConditionsSnapshot(conditions: state.activeConditions),
-          if (state.activeConditions.isNotEmpty) const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: StatusCard(
-                  label: 'Cash',
-                  value: '${player.cash}',
-                  icon: Icons.savings_rounded,
-                  color: player.cash >= 0 ? AppTheme.green : AppTheme.red,
+
+          AppSectionCard(
+            title: 'Core Stats',
+            icon: Icons.monitor_heart_rounded,
+            child: Column(
+              children: [
+                StatBar(label: 'Health', value: stats.health, color: AppTheme.green),
+                StatBar(label: 'Happiness', value: stats.happiness, color: AppTheme.amber),
+                StatBar(label: 'Stress', value: stats.stress, color: AppTheme.red),
+                StatBar(
+                  label: 'Energy',
+                  value: stats.energy,
+                  maxValue: stats.maxEnergy,
+                  color: AppTheme.primary,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: StatusCard(
+                StatBar(
+                  label: 'Intelligence',
+                  value: stats.intelligence,
+                  color: AppTheme.violet,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 4. Current Commitments Snapshot
+          AppSectionCard(
+            title: 'Commitments',
+            icon: Icons.account_balance_wallet_rounded,
+            child: Column(
+              children: [
+                MetricRow(
+                  label: 'Cash Flow',
+                  value: '${player.cash}',
+                  valueColor: player.cash >= 0 ? AppTheme.green : AppTheme.red,
+                  icon: Icons.savings_rounded,
+                ),
+                MetricRow(
+                  label: 'Net Month',
+                  value: currentJob == null
+                      ? '-${player.monthlyBaseExpense}'
+                      : '+${currentJob.monthlySalary - player.monthlyBaseExpense}',
+                  valueColor: (currentJob?.monthlySalary ?? 0) >= player.monthlyBaseExpense ? AppTheme.green : AppTheme.amber,
+                  icon: Icons.receipt_long_rounded,
+                ),
+                const Divider(color: AppTheme.border, height: 24),
+                MetricRow(
                   label: 'Occupation',
                   value: currentJob?.title ?? 'Unemployed',
-                  icon: currentJob == null
-                      ? Icons.work_off_rounded
-                      : Icons.badge_rounded,
-                  color: currentJob == null ? AppTheme.amber : AppTheme.green,
+                  icon: currentJob == null ? Icons.work_off_rounded : Icons.badge_rounded,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          StatusCard(
-            label: currentJob == null
-                ? 'Personal expense'
-                : 'Job salary / load',
-            value: currentJob == null
-                ? '${player.monthlyBaseExpense}'
-                : '+${currentJob.monthlySalary} / -${currentJob.monthlyEnergyLoad} EN',
-            icon: currentJob == null
-                ? Icons.receipt_long_rounded
-                : Icons.payments_rounded,
-            color: currentJob == null ? AppTheme.violet : AppTheme.primary,
-          ),
-          const SizedBox(height: 10),
-          StatusCard(
-            label: 'Housing',
-            value: '${housing.title} - ${housing.monthlyCost}/mo',
-            icon: Icons.home_rounded,
-            color: AppTheme.green,
-          ),
-          const SizedBox(height: 10),
-          StatusCard(
-            label: 'Finance',
-            value:
-                '${finance.label} - Debt ${finance.totalDebt} / Deposits ${finance.totalDeposits}',
-            icon: Icons.account_balance_rounded,
-            color: finance.emergencyDebt > 0
-                ? AppTheme.red
-                : finance.totalDebt > 0
-                    ? AppTheme.amber
-                    : AppTheme.primary,
-          ),
-          if (company != null) ...[
-            const SizedBox(height: 10),
-            StatusCard(
-              label: 'Company',
-              value:
-                  '${company.name} - ${controller.companyOutlook} / Net ${company.lastNetResult}',
-              icon: Icons.business_center_rounded,
-              color: AppTheme.amber,
+                MetricRow(
+                  label: 'Housing',
+                  value: '${housing.title} (-${housing.monthlyCost}/mo)',
+                  icon: Icons.home_rounded,
+                ),
+                MetricRow(
+                  label: 'Finance',
+                  value: finance.label,
+                  valueColor: finance.emergencyDebt > 0 ? AppTheme.red : AppTheme.text,
+                  icon: Icons.account_balance_rounded,
+                ),
+                if (activeEducation != null)
+                  MetricRow(
+                    label: 'Education',
+                    value: '${activeEducation.program.title} (${activeEducation.completedMonths}/${activeEducation.program.durationMonths})',
+                    icon: Icons.school_rounded,
+                  ),
+                if (company != null)
+                  MetricRow(
+                    label: 'Company',
+                    value: '${company.name} (${controller.companyOutlook})',
+                    icon: Icons.business_center_rounded,
+                  ),
+              ],
             ),
-          ],
-          if (activeEducation != null) ...[
-            const SizedBox(height: 10),
-            StatusCard(
-              label: 'Education',
-              value:
-                  '${activeEducation.program.title} - ${activeEducation.completedMonths}/${activeEducation.program.durationMonths}',
-              icon: Icons.school_rounded,
-              color: AppTheme.violet,
-            ),
-          ],
-          const SizedBox(height: 22),
-          Text('Core stats', style: textTheme.titleLarge),
-          const SizedBox(height: 12),
-          StatBar(label: 'Health', value: stats.health, color: AppTheme.green),
-          StatBar(label: 'Happiness', value: stats.happiness, color: AppTheme.amber),
-          StatBar(label: 'Stress', value: stats.stress, color: AppTheme.red),
-          StatBar(
-            label: 'Energy',
-            value: stats.energy,
-            maxValue: stats.maxEnergy,
-            color: AppTheme.primary,
           ),
-          StatBar(
-            label: 'Intelligence',
-            value: stats.intelligence,
-            color: AppTheme.violet,
-          ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              Expanded(child: Text('Monthly actions', style: textTheme.titleLarge)),
-              if (!controller.hasMeaningfulEnergy)
-                Text('Low energy', style: textTheme.bodyMedium),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ActionList(controller: controller),
           const SizedBox(height: 14),
+
+          // 5. Conditions Snapshot
+          if (state.activeConditions.isNotEmpty) ...[
+            ConditionsSnapshot(conditions: state.activeConditions),
+            const SizedBox(height: 14),
+          ],
+
+          // 6. Action Area
+          AppSectionCard(
+            title: 'Monthly Actions',
+            icon: Icons.ads_click_rounded,
+            action: !controller.hasMeaningfulEnergy
+                ? StatusChip(label: 'Low energy', color: AppTheme.red)
+                : null,
+            child: ActionList(controller: controller),
+          ),
+          const SizedBox(height: 14),
+          
+          // 7. Progression
+          ProgressionOverview(controller: controller),
+          const SizedBox(height: 22),
+
           ElevatedButton.icon(
             onPressed: () async {
               final result = await controller.endMonth();
@@ -209,28 +208,6 @@ class DashboardPage extends StatelessWidget {
             label: const Text('End Month'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceRaised,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Text(
-        'Reliability: $label',
-        style: Theme.of(context).textTheme.labelLarge,
       ),
     );
   }

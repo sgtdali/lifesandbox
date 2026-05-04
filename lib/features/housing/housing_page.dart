@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../game/state/game_scope.dart';
+import '../../shared/widgets/app_section_card.dart';
+import '../../shared/widgets/metric_row.dart';
+import '../../shared/widgets/status_chip.dart';
 import 'models/housing_option.dart';
 
 class HousingPage extends StatelessWidget {
@@ -19,7 +22,7 @@ class HousingPage extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -30,8 +33,10 @@ class HousingPage extends StatelessWidget {
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 18),
+
           _CurrentHousingCard(housing: current),
           const SizedBox(height: 22),
+
           Text('Housing options', style: textTheme.titleLarge),
           const SizedBox(height: 12),
           for (final option in controller.housingOptions) ...[
@@ -68,36 +73,22 @@ class _CurrentHousingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      color: AppTheme.surfaceRaised,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.home_rounded, color: AppTheme.green),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(housing.title, style: textTheme.titleLarge),
-                ),
-                _QualityPill(label: housing.quality),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(housing.description, style: textTheme.bodyMedium),
-            const SizedBox(height: 14),
-            _HousingMetric(label: 'Monthly rent', value: '${housing.monthlyCost}'),
-            _HousingMetric(label: 'Modifiers', value: housing.modifierSummary),
-            _HousingMetric(
-              label: 'Energy recovery',
-              value: _signed(housing.energyRecoveryModifier),
-            ),
-          ],
-        ),
+    return AppSectionCard(
+      title: 'Current Residence',
+      icon: Icons.home_rounded,
+      iconColor: AppTheme.green,
+      action: StatusChip(label: housing.quality, color: AppTheme.primary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(housing.title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(housing.description, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 16),
+          MetricRow(label: 'Monthly Rent', value: '${housing.monthlyCost}', valueColor: AppTheme.red),
+          MetricRow(label: 'Modifiers', value: housing.modifierSummary),
+          MetricRow(label: 'Energy Recovery', value: _signed(housing.energyRecoveryModifier), valueColor: AppTheme.green),
+        ],
       ),
     );
   }
@@ -118,105 +109,21 @@ class _HousingOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Text(option.title, style: textTheme.titleMedium)),
-                const SizedBox(width: 10),
-                _QualityPill(label: option.quality),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(option.description, style: textTheme.bodyMedium),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _HousingMetric(
-                    label: 'Rent',
-                    value: '${option.monthlyCost}/mo',
-                  ),
-                ),
-                Expanded(
-                  child: _HousingMetric(
-                    label: 'Move fee',
-                    value: isCurrent ? 'Current' : '${option.moveFee}',
-                  ),
-                ),
-              ],
-            ),
-            _HousingMetric(label: 'Monthly effects', value: option.modifierSummary),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: isCurrent || !canMove ? null : onMove,
-              child: Text(isCurrent ? 'Current Housing' : 'Move Here'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _HousingMetric extends StatelessWidget {
-  const _HousingMetric({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
+    return AppSectionCard(
+      title: option.title,
+      subtitle: option.description,
+      action: StatusChip(label: option.quality, color: AppTheme.primary),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: textTheme.bodyMedium),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.labelLarge,
+          MetricRow(label: 'Rent', value: '${option.monthlyCost}/mo'),
+          MetricRow(label: 'Move Fee', value: isCurrent ? 'Current' : '${option.moveFee}'),
+          MetricRow(label: 'Effects', value: option.modifierSummary),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: isCurrent || !canMove ? null : onMove,
+            child: Text(isCurrent ? 'Current Housing' : 'Move Here'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _QualityPill extends StatelessWidget {
-  const _QualityPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppTheme.primary,
-            ),
       ),
     );
   }

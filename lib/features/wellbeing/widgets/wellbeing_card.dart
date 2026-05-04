@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/app_section_card.dart';
+import '../../../shared/widgets/status_chip.dart';
 import '../models/wellbeing_state.dart';
 
 class WellbeingCard extends StatelessWidget {
@@ -13,47 +15,34 @@ class WellbeingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final color = _color(evaluation.tier);
 
-    return Card(
-      color: AppTheme.surfaceRaised,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.14),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(Icons.favorite_rounded, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(evaluation.label, style: textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(evaluation.description, style: textTheme.bodyMedium),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      for (final driver in evaluation.drivers)
-                        Text(driver, style: textTheme.bodyMedium),
-                    ],
+    return AppSectionCard(
+      title: 'Wellbeing',
+      subtitle: evaluation.description,
+      icon: Icons.favorite_rounded,
+      iconColor: color,
+      action: StatusChip(label: evaluation.label, color: color),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final driver in evaluation.drivers)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceRaised,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.border),
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
+                  child: Text(driver, style: Theme.of(context).textTheme.bodyMedium),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

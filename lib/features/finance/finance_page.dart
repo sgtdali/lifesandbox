@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../game/state/game_scope.dart';
+import '../../shared/widgets/app_section_card.dart';
+import '../../shared/widgets/metric_row.dart';
+import '../../shared/widgets/status_chip.dart';
 import 'models/active_debt.dart';
 import 'models/active_deposit.dart';
 import 'models/deposit_product.dart';
@@ -25,35 +28,38 @@ class FinancePage extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Finance', style: textTheme.headlineSmall),
           const SizedBox(height: 4),
-          Text(
-            'Manage loans, emergency debt, and simple deposits.',
-            style: textTheme.bodyMedium,
-          ),
+          Text('Manage loans, emergency debt, and simple deposits.', style: textTheme.bodyMedium),
           const SizedBox(height: 18),
-          _OverviewCard(
-            snapshot: snapshot,
-          ),
+          
+          _OverviewCard(snapshot: snapshot),
           const SizedBox(height: 12),
           _ObligationsCard(snapshot: snapshot),
           const SizedBox(height: 22),
-          Text('Active debts', style: textTheme.titleLarge),
+          
+          Text('Active Debts', style: textTheme.titleLarge),
           const SizedBox(height: 12),
           if (debts.isEmpty)
-            const _EmptyCard(text: 'No active debt.')
+            const AppSectionCard(
+              title: 'No Active Debt',
+              icon: Icons.check_circle_rounded,
+              iconColor: AppTheme.green,
+              child: Text('You are completely debt free.'),
+            )
           else
             for (final debt in debts) ...[
               _DebtCard(debt: debt),
               const SizedBox(height: 10),
             ],
+            
           const SizedBox(height: 14),
           if (debts.isNotEmpty) ...[
-            Text('Pay down debt', style: textTheme.titleLarge),
+            Text('Pay Down Debt', style: textTheme.titleLarge),
             const SizedBox(height: 12),
             _PaydownCard(
               cash: state.player.cash,
@@ -61,19 +67,14 @@ class FinancePage extends StatelessWidget {
                 final paid = await controller.payDownDebt(amount);
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      paid
-                          ? 'Debt reduced.'
-                          : 'Not enough cash or no active debt.',
-                    ),
-                  ),
+                  SnackBar(content: Text(paid ? 'Debt reduced.' : 'Not enough cash or no active debt.')),
                 );
               },
             ),
             const SizedBox(height: 14),
           ],
-          Text('Loan products', style: textTheme.titleLarge),
+          
+          Text('Loan Products', style: textTheme.titleLarge),
           const SizedBox(height: 12),
           for (final loan in controller.loanProducts) ...[
             _LoanProductCard(
@@ -81,43 +82,40 @@ class FinancePage extends StatelessWidget {
               onTake: () async {
                 await controller.takeLoan(loan);
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${loan.title} received.')),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${loan.title} received.')));
               },
             ),
             const SizedBox(height: 10),
           ],
+          
           const SizedBox(height: 14),
-          Text('Active deposits', style: textTheme.titleLarge),
+          Text('Active Deposits', style: textTheme.titleLarge),
           const SizedBox(height: 12),
           if (deposits.isEmpty)
-            const _EmptyCard(text: 'No active deposits.')
+            const AppSectionCard(
+              title: 'No Active Deposits',
+              icon: Icons.savings_outlined,
+              child: Text('Open a deposit to start earning interest.'),
+            )
           else
             for (final deposit in deposits) ...[
               _DepositCard(
                 deposit: deposit,
                 onWithdraw: deposit.isFlexible
                     ? () async {
-                        final withdrawn =
-                            await controller.withdrawDeposit(deposit);
+                        final withdrawn = await controller.withdrawDeposit(deposit);
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              withdrawn
-                                  ? '${deposit.title} withdrawn.'
-                                  : 'This deposit cannot be withdrawn yet.',
-                            ),
-                          ),
+                          SnackBar(content: Text(withdrawn ? '${deposit.title} withdrawn.' : 'This deposit cannot be withdrawn yet.')),
                         );
                       }
                     : null,
               ),
               const SizedBox(height: 10),
             ],
+            
           const SizedBox(height: 14),
-          Text('Deposit products', style: textTheme.titleLarge),
+          Text('Deposit Products', style: textTheme.titleLarge),
           const SizedBox(height: 12),
           for (final product in controller.depositProducts) ...[
             _DepositProductCard(
@@ -128,13 +126,7 @@ class FinancePage extends StatelessWidget {
                 final opened = await controller.openDeposit(product, amount);
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      opened
-                          ? '${product.title} opened.'
-                          : 'Not enough cash for that deposit.',
-                    ),
-                  ),
+                  SnackBar(content: Text(opened ? '${product.title} opened.' : 'Not enough cash for that deposit.')),
                 );
               },
             ),
@@ -147,44 +139,35 @@ class FinancePage extends StatelessWidget {
 }
 
 class _OverviewCard extends StatelessWidget {
-  const _OverviewCard({
-    required this.snapshot,
-  });
+  const _OverviewCard({required this.snapshot});
 
   final FinanceSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppTheme.surfaceRaised,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _FinanceRow(label: 'State', value: snapshot.label),
-            _FinanceRow(label: 'Cash', value: '${snapshot.cash}'),
-            _FinanceRow(label: 'Total debt', value: '${snapshot.totalDebt}'),
-            _FinanceRow(
-              label: 'Emergency debt',
-              value: '${snapshot.emergencyDebt}',
-            ),
-            _FinanceRow(
-              label: 'Monthly obligations',
-              value: '${snapshot.totalMonthlyObligations}',
-            ),
-            _FinanceRow(
-              label: 'Cushion',
-              value: '${snapshot.cushionMonths.toStringAsFixed(1)} mo',
-            ),
-            _FinanceRow(label: 'Deposits', value: '${snapshot.totalDeposits}'),
-            const SizedBox(height: 8),
+    return AppSectionCard(
+      title: 'Finance Overview',
+      icon: Icons.account_balance_rounded,
+      action: StatusChip(label: snapshot.label, color: AppTheme.primary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MetricRow(label: 'Available Cash', value: '${snapshot.cash}', valueColor: AppTheme.green),
+          MetricRow(label: 'Total Debt', value: '${snapshot.totalDebt}', valueColor: snapshot.totalDebt > 0 ? AppTheme.red : null),
+          MetricRow(label: 'Emergency Debt', value: '${snapshot.emergencyDebt}', valueColor: snapshot.emergencyDebt > 0 ? AppTheme.red : null),
+          MetricRow(label: 'Monthly Obligations', value: '${snapshot.totalMonthlyObligations}'),
+          MetricRow(label: 'Safety Cushion', value: '${snapshot.cushionMonths.toStringAsFixed(1)} mo'),
+          MetricRow(label: 'Total Deposits', value: '${snapshot.totalDeposits}', valueColor: AppTheme.primary),
+          
+          if (snapshot.signals.isNotEmpty) ...[
+            const Divider(height: 24, color: AppTheme.border),
             for (final signal in snapshot.signals)
               Padding(
-                padding: const EdgeInsets.only(bottom: 5),
-                child: Text(signal, style: Theme.of(context).textTheme.bodyMedium),
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(signal, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.amber)),
               ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -197,33 +180,18 @@ class _ObligationsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _FinanceRow(
-              label: 'Life obligations',
-              value: '${snapshot.monthlyLifeObligations}',
-            ),
-            _FinanceRow(
-              label: 'Growth obligations',
-              value: '${snapshot.monthlyGrowthObligations}',
-            ),
-            _FinanceRow(
-              label: 'Debt payments',
-              value: '${snapshot.monthlyDebtPayment}',
-            ),
-            _FinanceRow(
-              label: 'Liquid deposits',
-              value: '${snapshot.flexibleDeposits}',
-            ),
-            _FinanceRow(
-              label: 'Locked deposits',
-              value: '${snapshot.lockedDeposits}',
-            ),
-          ],
-        ),
+    return AppSectionCard(
+      title: 'Cash Flow Breakdown',
+      icon: Icons.pie_chart_rounded,
+      child: Column(
+        children: [
+          MetricRow(label: 'Life Obligations', value: '${snapshot.monthlyLifeObligations}', valueColor: AppTheme.amber),
+          MetricRow(label: 'Growth Obligations', value: '${snapshot.monthlyGrowthObligations}', valueColor: AppTheme.primary),
+          MetricRow(label: 'Debt Payments', value: '${snapshot.monthlyDebtPayment}', valueColor: AppTheme.red),
+          const Divider(height: 24, color: AppTheme.border),
+          MetricRow(label: 'Liquid Deposits', value: '${snapshot.flexibleDeposits}'),
+          MetricRow(label: 'Locked Deposits', value: '${snapshot.lockedDeposits}'),
+        ],
       ),
     );
   }
@@ -236,44 +204,25 @@ class _DebtCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(child: Text(debt.title, style: textTheme.titleMedium)),
-                if (debt.isEmergency)
-                  const Icon(Icons.warning_rounded, color: AppTheme.red),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _FinanceRow(label: 'Remaining', value: '${debt.remainingBalance}'),
-            _FinanceRow(label: 'Monthly payment', value: '${debt.monthlyPayment}'),
-            _FinanceRow(
-              label: 'Type',
-              value: debt.isEmergency ? 'Emergency priority' : 'Loan',
-            ),
-            _FinanceRow(
-              label: 'Remaining months',
-              value: debt.isEmergency ? 'Until cleared' : '${debt.remainingMonths}',
-            ),
-          ],
-        ),
+    return AppSectionCard(
+      title: debt.title,
+      icon: debt.isEmergency ? Icons.warning_rounded : Icons.credit_card_rounded,
+      iconColor: debt.isEmergency ? AppTheme.red : AppTheme.amber,
+      action: debt.isEmergency ? StatusChip(label: 'Priority', color: AppTheme.red) : null,
+      child: Column(
+        children: [
+          MetricRow(label: 'Remaining Balance', value: '${debt.remainingBalance}', valueColor: AppTheme.red),
+          MetricRow(label: 'Monthly Payment', value: '${debt.monthlyPayment}'),
+          MetricRow(label: 'Type', value: debt.isEmergency ? 'Emergency' : 'Standard Loan'),
+          MetricRow(label: 'Remaining Term', value: debt.isEmergency ? 'Until Cleared' : '${debt.remainingMonths} mo'),
+        ],
       ),
     );
   }
 }
 
 class _PaydownCard extends StatelessWidget {
-  const _PaydownCard({
-    required this.cash,
-    required this.onPay,
-  });
+  const _PaydownCard({required this.cash, required this.onPay});
 
   final int cash;
   final ValueChanged<int> onPay;
@@ -281,30 +230,20 @@ class _PaydownCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final amounts = [25, 50, 100];
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Payments target emergency debt first, then the highest-pressure loan.',
-              style: Theme.of(context).textTheme.bodyMedium,
+    return AppSectionCard(
+      title: 'Make Payment',
+      subtitle: 'Targets emergency debt first, then highest-pressure loan.',
+      icon: Icons.payments_rounded,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final amount in amounts)
+            OutlinedButton(
+              onPressed: cash >= amount ? () => onPay(amount) : null,
+              child: Text('Pay $amount'),
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final amount in amounts)
-                  OutlinedButton(
-                    onPressed: cash >= amount ? () => onPay(amount) : null,
-                    child: Text('Pay $amount'),
-                  ),
-              ],
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -318,28 +257,18 @@ class _LoanProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(loan.title, style: textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(loan.description, style: textTheme.bodyMedium),
-            const SizedBox(height: 10),
-            _FinanceRow(label: 'Cash now', value: '+${loan.principal}'),
-            _FinanceRow(
-              label: 'Repayment',
-              value: '${loan.monthlyPayment}/mo for ${loan.durationMonths} mo',
-            ),
-            _FinanceRow(label: 'Total repayment', value: '${loan.totalRepayment}'),
-            const SizedBox(height: 12),
-            ElevatedButton(onPressed: onTake, child: const Text('Take Loan')),
-          ],
-        ),
+    return AppSectionCard(
+      title: loan.title,
+      subtitle: loan.description,
+      icon: Icons.account_balance_rounded,
+      child: Column(
+        children: [
+          MetricRow(label: 'Principal Received', value: '+${loan.principal}', valueColor: AppTheme.green),
+          MetricRow(label: 'Repayment Terms', value: '${loan.monthlyPayment}/mo for ${loan.durationMonths} mo'),
+          MetricRow(label: 'Total Repayment', value: '${loan.totalRepayment}', valueColor: AppTheme.red),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: onTake, child: const Text('Take Loan')),
+        ],
       ),
     );
   }
@@ -353,40 +282,21 @@ class _DepositCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(deposit.title, style: textTheme.titleMedium),
-            const SizedBox(height: 10),
-            _FinanceRow(label: 'Amount', value: '${deposit.amount}'),
-            _FinanceRow(
-              label: 'Liquidity',
-              value: deposit.isFlexible ? 'Liquid' : 'Locked',
-            ),
-            _FinanceRow(
-              label: 'Monthly return',
-              value: '${deposit.monthlyReturnPercent}%',
-            ),
-            _FinanceRow(
-              label: 'Status',
-              value: deposit.isFlexible
-                  ? 'Flexible'
-                  : '${deposit.remainingMonths} mo locked',
-            ),
-            if (onWithdraw != null) ...[
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: onWithdraw,
-                child: const Text('Withdraw'),
-              ),
-            ],
+    return AppSectionCard(
+      title: deposit.title,
+      icon: Icons.savings_rounded,
+      iconColor: AppTheme.primary,
+      action: StatusChip(label: deposit.isFlexible ? 'Liquid' : 'Locked', color: AppTheme.primary),
+      child: Column(
+        children: [
+          MetricRow(label: 'Current Amount', value: '${deposit.amount}', valueColor: AppTheme.green),
+          MetricRow(label: 'Monthly Return', value: '${deposit.monthlyReturnPercent}%', valueColor: AppTheme.green),
+          MetricRow(label: 'Status', value: deposit.isFlexible ? 'Flexible Withdrawal' : '${deposit.remainingMonths} mo locked'),
+          if (onWithdraw != null) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(onPressed: onWithdraw, child: const Text('Withdraw')),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -407,86 +317,28 @@ class _DepositProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(product.title, style: textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(product.description, style: textTheme.bodyMedium),
-            const SizedBox(height: 10),
-            _FinanceRow(
-              label: 'Return',
-              value: '${product.monthlyReturnPercent}% monthly',
-            ),
-            _FinanceRow(
-              label: 'Lock',
-              value: product.isFlexible
-                  ? 'Withdraw anytime'
-                  : '${product.lockMonths} mo',
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final amount in amounts)
-                  OutlinedButton(
-                    onPressed: cash >= amount ? () => onOpen(amount) : null,
-                    child: Text('Deposit $amount'),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FinanceRow extends StatelessWidget {
-  const _FinanceRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Row(
+    return AppSectionCard(
+      title: product.title,
+      subtitle: product.description,
+      icon: Icons.trending_up_rounded,
+      iconColor: AppTheme.green,
+      child: Column(
         children: [
-          Expanded(child: Text(label, style: textTheme.bodyMedium)),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: textTheme.labelLarge,
-            ),
+          MetricRow(label: 'Return Rate', value: '${product.monthlyReturnPercent}% monthly', valueColor: AppTheme.green),
+          MetricRow(label: 'Lock Period', value: product.isFlexible ? 'Withdraw Anytime' : '${product.lockMonths} mo'),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final amount in amounts)
+                OutlinedButton(
+                  onPressed: cash >= amount ? () => onOpen(amount) : null,
+                  child: Text('Deposit $amount'),
+                ),
+            ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyCard extends StatelessWidget {
-  const _EmptyCard({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
       ),
     );
   }
