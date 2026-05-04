@@ -198,9 +198,11 @@ class _DecisionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: themeColor.withOpacity(0.2), width: 1.2),
       ),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -265,6 +267,7 @@ class _DecisionCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
