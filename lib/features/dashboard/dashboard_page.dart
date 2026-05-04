@@ -41,7 +41,6 @@ class DashboardPage extends StatelessWidget {
         children: [
           // 1. Hero Header
           DashboardHero(
-            month: state.month,
             runState: controller.runState,
             reliabilityLabel: player.reliability.label,
             wellbeingLabel: controller.wellbeing.label,
@@ -50,8 +49,6 @@ class DashboardPage extends StatelessWidget {
                 : (controller.wellbeing.tier == WellbeingTier.strained
                     ? AppTheme.amber
                     : AppTheme.red),
-            cash: player.cash,
-            stats: stats,
           ),
           const SizedBox(height: 18),
 

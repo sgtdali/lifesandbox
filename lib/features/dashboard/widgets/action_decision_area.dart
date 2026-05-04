@@ -231,7 +231,6 @@ class _DecisionTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: themeColor.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: themeColor.withOpacity(0.2), width: 1.2),

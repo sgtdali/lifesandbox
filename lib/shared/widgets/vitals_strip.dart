@@ -17,26 +17,81 @@ class VitalsStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: AppTheme.surfaceRaised,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppTheme.border.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Top Row: Cash and Month
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Left: Circles Row (Prioritized)
+          Expanded(
+            flex: 4,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _StatCircle(
+                  label: 'Energy',
+                  icon: Icons.bolt_rounded,
+                  current: stats.energy,
+                  max: stats.maxEnergy,
+                  color: AppTheme.primary,
+                ),
+                _StatCircle(
+                  label: 'Stress',
+                  icon: Icons.psychology_rounded,
+                  current: stats.stress,
+                  max: 100,
+                  color: AppTheme.red,
+                ),
+                _StatCircle(
+                  label: 'Health',
+                  icon: Icons.favorite_rounded,
+                  current: stats.health,
+                  max: 100,
+                  color: AppTheme.green,
+                ),
+                _StatCircle(
+                  label: 'Happy',
+                  icon: Icons.sentiment_satisfied_rounded,
+                  current: stats.happiness,
+                  max: 100,
+                  color: AppTheme.amber,
+                ),
+                _StatCircle(
+                  label: 'Intel',
+                  icon: Icons.lightbulb_rounded,
+                  current: stats.intelligence,
+                  max: 100,
+                  color: AppTheme.violet,
+                ),
+              ],
+            ),
+          ),
+          
+          // Vertical Divider
+          Container(
+            height: 40,
+            width: 1,
+            color: AppTheme.border,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+
+          // Right: Cash and Month
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.attach_money_rounded, size: 16, color: AppTheme.green),
                   const SizedBox(width: 4),
@@ -44,55 +99,20 @@ class VitalsStrip extends StatelessWidget {
                     '$cash',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w900,
+                          color: AppTheme.text,
                         ),
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
               Text(
-                'MONTH $month',
+                'MO $month',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppTheme.mutedText,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
+                      letterSpacing: 1.1,
+                      fontSize: 10,
                     ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          
-          // Circles Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _StatCircle(
-                icon: Icons.bolt_rounded,
-                current: stats.energy,
-                max: stats.maxEnergy,
-                color: AppTheme.primary,
-              ),
-              _StatCircle(
-                icon: Icons.psychology_rounded,
-                current: stats.stress,
-                max: 100,
-                color: AppTheme.red,
-              ),
-              _StatCircle(
-                icon: Icons.favorite_rounded,
-                current: stats.health,
-                max: 100,
-                color: AppTheme.green,
-              ),
-              _StatCircle(
-                icon: Icons.sentiment_satisfied_rounded,
-                current: stats.happiness,
-                max: 100,
-                color: AppTheme.amber,
-              ),
-              _StatCircle(
-                icon: Icons.lightbulb_rounded,
-                current: stats.intelligence,
-                max: 100,
-                color: AppTheme.violet,
               ),
             ],
           ),
@@ -104,12 +124,14 @@ class VitalsStrip extends StatelessWidget {
 
 class _StatCircle extends StatelessWidget {
   const _StatCircle({
+    required this.label,
     required this.icon,
     required this.current,
     required this.max,
     required this.color,
   });
 
+  final String label;
   final IconData icon;
   final int current;
   final int max;
@@ -122,29 +144,50 @@ class _StatCircle extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          width: 42,
-          height: 42,
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.background.withOpacity(0.3),
+          ),
           child: Stack(
             alignment: Alignment.center,
             children: [
-              CircularProgressIndicator(
-                value: value,
-                backgroundColor: color.withOpacity(0.1),
-                color: color,
-                strokeWidth: 3.5,
-                strokeCap: StrokeCap.round,
+              SizedBox.expand(
+                child: CircularProgressIndicator(
+                  value: value,
+                  backgroundColor: Colors.transparent,
+                  color: color,
+                  strokeWidth: 2.5,
+                  strokeCap: StrokeCap.round,
+                ),
               ),
-              Icon(icon, size: 18, color: color),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 14, color: color.withOpacity(0.9)),
+                  const SizedBox(height: 1),
+                  Text(
+                    '$current',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.text,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          '$current',
+          label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: AppTheme.text.withOpacity(0.9),
+            fontWeight: FontWeight.w600,
+            color: AppTheme.mutedText,
+            fontSize: 9,
           ),
         ),
       ],
