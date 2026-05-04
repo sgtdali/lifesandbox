@@ -39,6 +39,7 @@ class GameState {
     this.pendingEvent,
     this.lastApplicationResult,
     this.lastMonthResult,
+    required this.randomSeed,
   });
 
   final int month;
@@ -62,9 +63,11 @@ class GameState {
   final ActiveCompany? activeCompany;
   final ApplicationResult? lastApplicationResult;
   final MonthResult? lastMonthResult;
+  final int randomSeed;
 
-  factory GameState.initial() {
+  factory GameState.initial({int seed = 0}) {
     return GameState(
+      randomSeed: seed,
       month: GameBalance.startingMonth,
       player: PlayerState.initial(),
       currentJob: null,
@@ -115,6 +118,7 @@ class GameState {
     bool clearPendingEvent = false,
     bool clearLastApplicationResult = false,
     bool clearLastMonthResult = false,
+    int? randomSeed,
   }) {
     return GameState(
       month: month ?? this.month,
@@ -145,6 +149,7 @@ class GameState {
           : lastApplicationResult ?? this.lastApplicationResult,
       lastMonthResult:
           clearLastMonthResult ? null : lastMonthResult ?? this.lastMonthResult,
+      randomSeed: randomSeed ?? this.randomSeed,
     );
   }
 
@@ -175,6 +180,7 @@ class GameState {
           activeConditions.map((condition) => condition.toJson()).toList(),
       'activeCompany': activeCompany?.toJson(),
       'lastMonthResult': lastMonthResult?.toJson(),
+      'randomSeed': randomSeed,
     };
   }
 
@@ -249,6 +255,7 @@ class GameState {
           : MonthResult.fromJson(
               Map<String, dynamic>.from(json['lastMonthResult'] as Map),
             ),
+      randomSeed: json['randomSeed'] as int? ?? 0,
     );
   }
 

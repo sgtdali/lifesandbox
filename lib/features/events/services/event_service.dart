@@ -41,7 +41,7 @@ class EventService {
       state = state.copyWith(scheduledEvents: nextScheduled);
     }
 
-    final random = Random(_seedFor(state.month, state.player.cash));
+    final random = Random(_seedFor(state));
     if (random.nextInt(100) >= eventChancePercent) {
       return EventGenerationResult(state: state, pendingEvent: null);
     }
@@ -293,8 +293,8 @@ class EventService {
     return state.activeConditions.any((condition) => condition.id == id);
   }
 
-  int _seedFor(int month, int cash) {
-    return month * 997 + cash * 13;
+  int _seedFor(GameState state) {
+    return state.randomSeed + state.month * 997 + state.player.cash * 13;
   }
 }
 
