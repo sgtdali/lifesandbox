@@ -16,53 +16,21 @@ class ActionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recoveryActions = controller.actions.where((a) => a.type == ActionType.rest || a.type == ActionType.deepRest || a.type == ActionType.walk).toList();
-    final wellbeingActions = controller.actions.where((a) => a.type == ActionType.personalReset || a.type == ActionType.socialTime).toList();
-    final progressActions = controller.actions.where((a) => a.type == ActionType.selfStudy || a.type == ActionType.lookAround).toList();
+    final allActions = controller.actions;
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
       children: [
-        if (recoveryActions.isNotEmpty) ...[
-          _ActionGroupLabel('Recovery'),
-          for (final action in recoveryActions) _ActionTile(action: action, controller: controller),
-          const SizedBox(height: 12),
-        ],
-        if (wellbeingActions.isNotEmpty) ...[
-          _ActionGroupLabel('Wellbeing'),
-          for (final action in wellbeingActions) _ActionTile(action: action, controller: controller),
-          const SizedBox(height: 12),
-        ],
-        if (progressActions.isNotEmpty) ...[
-          _ActionGroupLabel('Progress'),
-          for (final action in progressActions) _ActionTile(action: action, controller: controller),
-        ],
+        for (final action in allActions) 
+          _ActionChip(action: action, controller: controller),
       ],
     );
   }
 }
 
-class _ActionGroupLabel extends StatelessWidget {
-  const _ActionGroupLabel(this.label);
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
-      child: Text(
-        label.toUpperCase(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: AppTheme.mutedText,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({
+class _ActionChip extends StatelessWidget {
+  const _ActionChip({
     required this.action,
     required this.controller,
   });
@@ -75,64 +43,59 @@ class _ActionTile extends StatelessWidget {
     final enabled = controller.canPerform(action);
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
+    return Container(
+      width: (MediaQuery.of(context).size.width - 60) / 2, // 2 columns roughly
+      constraints: const BoxConstraints(maxWidth: 240),
+      decoration: BoxDecoration(
         color: AppTheme.surfaceRaised,
         borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: enabled ? () => controller.performAction(action) : null,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        action.title, 
-                        style: textTheme.titleMedium?.copyWith(
-                          color: enabled ? AppTheme.text : AppTheme.mutedText,
-                        ),
-                      ),
-                      if (action.description.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          action.description, 
-                          style: textTheme.bodyMedium?.copyWith(fontSize: 13),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: InkWell(
+        onTap: enabled ? () => controller.performAction(action) : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(_getIconFor(action.type), size: 18, color: enabled ? AppTheme.primary : AppTheme.mutedText),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  action.title,
+                  style: textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: enabled ? AppTheme.text : AppTheme.mutedText,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    StatusChip(
-                      label: '${action.energyCost} EN',
-                      color: enabled ? AppTheme.primary : AppTheme.mutedText,
-                      icon: Icons.bolt_rounded,
-                    ),
-                    if (action.cashCost > 0) ...[
-                      const SizedBox(height: 4),
-                      StatusChip(
-                        label: '-${action.cashCost}',
-                        color: enabled ? AppTheme.red : AppTheme.mutedText,
-                        icon: Icons.attach_money_rounded,
-                      ),
-                    ],
-                  ],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${action.energyCost} EN',
+                style: textTheme.labelSmall?.copyWith(
+                  color: AppTheme.primary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  IconData _getIconFor(ActionType type) {
+    switch (type) {
+      case ActionType.rest: return Icons.hotel_rounded;
+      case ActionType.deepRest: return Icons.bed_rounded;
+      case ActionType.walk: return Icons.directions_walk_rounded;
+      case ActionType.personalReset: return Icons.refresh_rounded;
+      case ActionType.socialTime: return Icons.group_rounded;
+      case ActionType.selfStudy: return Icons.lightbulb_rounded;
+      case ActionType.lookAround: return Icons.search_rounded;
+    }
   }
 }

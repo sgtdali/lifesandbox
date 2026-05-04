@@ -29,12 +29,25 @@ class MetricRow extends StatelessWidget {
             const SizedBox(width: 8),
           ],
           Expanded(
-            child: Text(label, style: textTheme.bodyMedium),
+            child: Text(
+              label, 
+              style: textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+                fontSize: 13,
+              )
+            ),
           ),
-          Text(
-            value,
-            style: textTheme.titleMedium?.copyWith(
-              color: valueColor,
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: textTheme.bodyMedium?.copyWith(
+                color: valueColor,
+                fontWeight: FontWeight.w700,
+                fontSize: value.length > 20 ? 11 : 13,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

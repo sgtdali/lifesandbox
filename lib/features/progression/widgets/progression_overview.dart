@@ -15,71 +15,24 @@ class ProgressionOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final guidance = controller.guidance;
     final milestones = controller.milestones;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _GuidanceCard(guidance: guidance),
-        const SizedBox(height: 14),
-        _MilestonePreview(milestones: milestones),
-      ],
-    );
-  }
-}
-
-class _GuidanceCard extends StatelessWidget {
-  const _GuidanceCard({required this.guidance});
-
-  final List<String> guidance;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppSectionCard(
-      title: 'Current Guidance',
-      icon: Icons.assistant_direction_rounded,
-      iconColor: AppTheme.primary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final item in guidance)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.arrow_right_rounded, color: AppTheme.primary, size: 20),
-                  const SizedBox(width: 6),
-                  Expanded(child: Text(item, style: Theme.of(context).textTheme.bodyMedium)),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MilestonePreview extends StatelessWidget {
-  const _MilestonePreview({required this.milestones});
-
-  final List<MilestoneView> milestones;
-
-  @override
-  Widget build(BuildContext context) {
     final completed = milestones.where((item) => item.completed).length;
     final next = milestones.where((item) => !item.completed).take(3).toList();
 
     return AppSectionCard(
-      title: 'Milestones',
-      subtitle: '$completed of ${milestones.length} completed',
-      icon: Icons.flag_rounded,
+      title: 'MILESTONES',
+      action: Text(
+        '$completed of ${milestones.length} completed',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: AppTheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (next.isEmpty)
-            Text('All current milestones are complete.', style: Theme.of(context).textTheme.bodyMedium)
+            const Text('All milestones are complete.')
           else
             for (final item in next)
               Padding(
@@ -87,21 +40,49 @@ class _MilestonePreview extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.radio_button_unchecked_rounded, color: AppTheme.mutedText, size: 20),
-                    const SizedBox(width: 10),
+                    Icon(
+                      item.completed ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
+                      color: item.completed ? AppTheme.green : AppTheme.mutedText,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.definition.title, style: Theme.of(context).textTheme.titleSmall),
-                          const SizedBox(height: 2),
-                          Text(item.definition.description, style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            item.definition.title,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: AppTheme.text,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
+          const Divider(color: AppTheme.border, height: 24),
+          InkWell(
+            onTap: () {
+              // Show full list
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'View all milestones',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, size: 16, color: AppTheme.primary),
+              ],
+            ),
+          ),
         ],
       ),
     );

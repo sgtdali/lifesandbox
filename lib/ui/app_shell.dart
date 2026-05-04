@@ -37,9 +37,10 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 540),
+          child: SizedBox(
+            width: 540,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),

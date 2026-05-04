@@ -7,10 +7,13 @@ import '../../features/progression/models/run_state_evaluation.dart';
 import '../../features/progression/widgets/progression_overview.dart';
 import '../../features/wellbeing/models/wellbeing_state.dart';
 import '../../game/state/game_scope.dart';
+import '../../shared/widgets/app_section_card.dart';
 import '../../shared/widgets/warning_banner.dart';
 import 'widgets/dashboard_hero.dart';
 import 'widgets/commitments_summary.dart';
 import 'widgets/action_decision_area.dart';
+import 'widgets/critical_snapshot_card.dart';
+import 'widgets/recommendation_card.dart';
 import 'widgets/end_month_support.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -22,20 +25,15 @@ class DashboardPage extends StatelessWidget {
     final state = controller.state;
     final player = state.player;
     final stats = player.stats;
-    final currentJob = state.currentJob;
-    final activeEducation = state.activeEducation;
-    final housing = state.currentHousing;
     final pendingEvent = state.pendingEvent;
-    final company = state.activeCompany;
     final finance = controller.financeSnapshot;
-    final textTheme = Theme.of(context).textTheme;
 
     if (controller.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -50,10 +48,17 @@ class DashboardPage extends StatelessWidget {
                     ? AppTheme.amber
                     : AppTheme.red),
           ),
-          const SizedBox(height: 18),
-
-          // 2. Guidance & Warnings (Decision Support Brain)
+          
+          // 2. Guidance & Warnings (Recommendation Card)
+          RecommendationCard(
+            recommendations: controller.guidance,
+            onTap: () {
+              // Maybe show a detail sheet if clicked
+            },
+          ),
+          
           if (pendingEvent != null) ...[
+            const SizedBox(height: 8),
             WarningBanner(
               title: 'Pending event',
               message: pendingEvent.event.title,
@@ -64,35 +69,58 @@ class DashboardPage extends StatelessWidget {
                 child: const Text('OPEN'),
               ),
             ),
-            const SizedBox(height: 18),
           ],
+          const SizedBox(height: 16),
 
-          // 3. (Redundant section removed)
-          const SizedBox(height: 4),
-
-          // 4. Commitments summary
-          CommitmentsSummary(
-            state: state,
-            finance: finance,
-            companyOutlook: controller.companyOutlook,
+          // 3. Two Column Stats Area
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: CriticalSnapshotCard(
+                  stats: stats,
+                  wellbeingLabel: controller.wellbeing.label,
+                  wellbeingColor: controller.wellbeing.tier == WellbeingTier.thriving
+                      ? AppTheme.green
+                      : (controller.wellbeing.tier == WellbeingTier.strained
+                          ? AppTheme.amber
+                          : AppTheme.red),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: CommitmentsSummary(
+                  state: state,
+                  finance: finance,
+                  companyOutlook: controller.companyOutlook,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
-          // 5. Conditions Snapshot
-          if (state.activeConditions.isNotEmpty) ...[
-            ConditionsSnapshot(conditions: state.activeConditions),
-            const SizedBox(height: 14),
-          ],
-
-          // 6. Action Area (Prioritized)
+          // 4. Action Area (Prioritized)
           ActionDecisionArea(controller: controller),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           
-          // 7. Progression (Milestones)
-          ProgressionOverview(controller: controller),
-          const SizedBox(height: 24),
+          // 5. Two Column Bottom Area (Conditions & Milestones)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: state.activeConditions.isNotEmpty 
+                    ? ConditionsSnapshot(conditions: state.activeConditions)
+                    : AppSectionCard(title: 'CONDITIONS', child: const Text('No active conditions.')),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: ProgressionOverview(controller: controller),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
 
-          // 8. End Month Area
+          // 6. End Month Area
           EndMonthSupport(controller: controller),
         ],
       ),

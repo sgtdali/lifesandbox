@@ -31,71 +31,52 @@ class CommitmentsSummary extends StatelessWidget {
         : (currentJob.monthlySalary - player.monthlyBaseExpense);
 
     return AppSectionCard(
-      title: 'Life & Finance',
-      icon: Icons.account_balance_wallet_rounded,
+      title: 'CURRENT COMMITMENTS',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // This Month Section
-          _SubHeader('THIS MONTH'),
-          const SizedBox(height: 8),
           MetricRow(
-            label: 'Cash on Hand',
-            value: '${player.cash}',
-            valueColor: player.cash >= 100 ? AppTheme.green : (player.cash >= 0 ? AppTheme.amber : AppTheme.red),
-            icon: Icons.attach_money_rounded,
-          ),
-          MetricRow(
-            label: 'Net Cash Flow',
-            value: '${netMonth >= 0 ? "+" : ""}$netMonth',
-            valueColor: netMonth >= 0 ? AppTheme.green : AppTheme.amber,
-            icon: Icons.receipt_long_rounded,
-          ),
-          
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(color: AppTheme.border, height: 1),
-          ),
-          
-          // Current Commitments Section
-          _SubHeader('COMMITMENTS'),
-          const SizedBox(height: 8),
-          MetricRow(
-            label: 'Occupation',
+            label: 'Job',
             value: currentJob?.title ?? 'Unemployed',
             valueColor: currentJob == null ? AppTheme.amber : AppTheme.text,
-            icon: currentJob == null ? Icons.work_off_rounded : Icons.badge_rounded,
+            icon: Icons.work_rounded,
           ),
           MetricRow(
             label: 'Housing',
             value: housing.title,
+            valueColor: housing.id == 'shared_room' ? AppTheme.amber : AppTheme.text,
             icon: Icons.home_rounded,
           ),
           MetricRow(
-            label: 'Finance State',
-            value: finance.label,
-            valueColor: finance.emergencyDebt > 0
-                ? AppTheme.red
-                : (finance.tier == FinanceStateTier.pressured ||
-                        finance.tier == FinanceStateTier.fragile
-                    ? AppTheme.amber
-                    : AppTheme.text),
-            icon: Icons.account_balance_rounded,
+            label: 'Education',
+            value: activeEducation != null 
+                ? '${activeEducation.program.title} (${activeEducation.completedMonths}/${activeEducation.program.durationMonths})' 
+                : 'None',
+            valueColor: activeEducation != null ? AppTheme.primary : AppTheme.mutedText,
+            icon: Icons.school_rounded,
           ),
-          if (activeEducation != null)
-            MetricRow(
-              label: 'Education',
-              value: '${activeEducation.program.title} (${activeEducation.completedMonths}/${activeEducation.program.durationMonths}m)',
-              valueColor: activeEducation.studyRequirementMet ? AppTheme.green : AppTheme.amber,
-              icon: Icons.school_rounded,
-            ),
-          if (company != null)
-            MetricRow(
-              label: 'Company',
-              value: '$companyOutlook outlook',
-              valueColor: company.health > 70 ? AppTheme.green : (company.health < 40 ? AppTheme.red : AppTheme.amber),
-              icon: Icons.business_center_rounded,
-            ),
+          MetricRow(
+            label: 'Finance',
+            value: finance.label,
+            valueColor: AppTheme.green,
+            icon: Icons.monetization_on_rounded,
+          ),
+          MetricRow(
+            label: 'Company',
+            value: company?.name ?? 'Not founded',
+            valueColor: company == null ? AppTheme.mutedText : AppTheme.text,
+            icon: Icons.business_rounded,
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Divider(color: AppTheme.border, height: 1),
+          ),
+          MetricRow(
+            label: 'Monthly Net',
+            value: '${netMonth >= 0 ? "+" : ""}$netMonth',
+            valueColor: netMonth >= 0 ? AppTheme.green : AppTheme.red,
+            icon: Icons.trending_up_rounded,
+          ),
         ],
       ),
     );
